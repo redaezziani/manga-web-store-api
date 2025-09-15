@@ -18,7 +18,9 @@ import { SmtpModule } from '../smtp/smtp.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-super-secret-jwt-key-change-in-production',
+        secret:
+          configService.get<string>('JWT_SECRET') ||
+          'your-super-secret-jwt-key-change-in-production',
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN') || '1h',
         },

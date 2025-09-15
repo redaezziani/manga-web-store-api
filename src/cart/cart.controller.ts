@@ -11,9 +11,19 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 import { CartService } from './cart.service';
-import { AddToCartDto, UpdateCartItemDto, RemoveFromCartDto } from './dto/cart.dto';
+import {
+  AddToCartDto,
+  UpdateCartItemDto,
+  RemoveFromCartDto,
+} from './dto/cart.dto';
 import { CartApiResponseDto, CartResponseDto } from './dto/cart-response.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -27,7 +37,8 @@ export class CartController {
   @Get()
   @ApiOperation({
     summary: 'Get user cart',
-    description: 'Retrieve the current user\'s shopping cart with all items and summary'
+    description:
+      "Retrieve the current user's shopping cart with all items and summary",
   })
   @ApiResponse({
     status: 200,
@@ -41,9 +52,9 @@ export class CartController {
   async getCart(@Request() req): Promise<CartApiResponseDto<CartResponseDto>> {
     try {
       const userId = req.user.id;
-      
+
       const cart = await this.cartService.getCart(userId);
-      
+
       return {
         success: true,
         message: 'Cart retrieved successfully',
@@ -61,7 +72,7 @@ export class CartController {
   @Post('add')
   @ApiOperation({
     summary: 'Add item to cart',
-    description: 'Add a manga volume to the shopping cart'
+    description: 'Add a manga volume to the shopping cart',
   })
   @ApiBody({ type: AddToCartDto })
   @ApiResponse({
@@ -80,13 +91,13 @@ export class CartController {
   @HttpCode(HttpStatus.CREATED)
   async addToCart(
     @Body() addToCartDto: AddToCartDto,
-    @Request() req
+    @Request() req,
   ): Promise<CartApiResponseDto<CartResponseDto>> {
     try {
       const userId = req.user.id;
-      
+
       const cart = await this.cartService.addToCart(userId, addToCartDto);
-      
+
       return {
         success: true,
         message: 'Item added to cart successfully',
@@ -104,7 +115,7 @@ export class CartController {
   @Put('update')
   @ApiOperation({
     summary: 'Update cart item quantity',
-    description: 'Update the quantity of an existing cart item'
+    description: 'Update the quantity of an existing cart item',
   })
   @ApiBody({ type: UpdateCartItemDto })
   @ApiResponse({
@@ -122,13 +133,16 @@ export class CartController {
   })
   async updateCartItem(
     @Body() updateCartItemDto: UpdateCartItemDto,
-    @Request() req
+    @Request() req,
   ): Promise<CartApiResponseDto<CartResponseDto>> {
     try {
       const userId = req.user.id;
-      
-      const cart = await this.cartService.updateCartItem(userId, updateCartItemDto);
-      
+
+      const cart = await this.cartService.updateCartItem(
+        userId,
+        updateCartItemDto,
+      );
+
       return {
         success: true,
         message: 'Cart item updated successfully',
@@ -146,7 +160,7 @@ export class CartController {
   @Delete('remove/:cartItemId')
   @ApiOperation({
     summary: 'Remove item from cart',
-    description: 'Remove a specific item from the shopping cart'
+    description: 'Remove a specific item from the shopping cart',
   })
   @ApiResponse({
     status: 200,
@@ -159,13 +173,13 @@ export class CartController {
   })
   async removeFromCart(
     @Param('cartItemId') cartItemId: string,
-    @Request() req
+    @Request() req,
   ): Promise<CartApiResponseDto<CartResponseDto>> {
     try {
       const userId = req.user.id;
-      
+
       const cart = await this.cartService.removeFromCart(userId, cartItemId);
-      
+
       return {
         success: true,
         message: 'Item removed from cart successfully',
@@ -183,7 +197,7 @@ export class CartController {
   @Delete('clear')
   @ApiOperation({
     summary: 'Clear cart',
-    description: 'Remove all items from the shopping cart'
+    description: 'Remove all items from the shopping cart',
   })
   @ApiResponse({
     status: 200,
@@ -196,22 +210,24 @@ export class CartController {
         data: {
           type: 'object',
           properties: {
-            message: { type: 'string', example: 'Cart cleared successfully' }
-          }
-        }
-      }
+            message: { type: 'string', example: 'Cart cleared successfully' },
+          },
+        },
+      },
     },
   })
   @ApiResponse({
     status: 404,
     description: 'Cart not found',
   })
-  async clearCart(@Request() req): Promise<CartApiResponseDto<{ message: string }>> {
+  async clearCart(
+    @Request() req,
+  ): Promise<CartApiResponseDto<{ message: string }>> {
     try {
       const userId = req.user.id;
-      
+
       const result = await this.cartService.clearCart(userId);
-      
+
       return {
         success: true,
         message: 'Cart cleared successfully',
@@ -229,7 +245,7 @@ export class CartController {
   @Get('count')
   @ApiOperation({
     summary: 'Get cart item count',
-    description: 'Get the total number of items in the user\'s cart'
+    description: "Get the total number of items in the user's cart",
   })
   @ApiResponse({
     status: 200,
@@ -238,22 +254,27 @@ export class CartController {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: true },
-        message: { type: 'string', example: 'Cart count retrieved successfully' },
+        message: {
+          type: 'string',
+          example: 'Cart count retrieved successfully',
+        },
         data: {
           type: 'object',
           properties: {
-            count: { type: 'number', example: 5 }
-          }
-        }
-      }
+            count: { type: 'number', example: 5 },
+          },
+        },
+      },
     },
   })
-  async getCartItemCount(@Request() req): Promise<CartApiResponseDto<{ count: number }>> {
+  async getCartItemCount(
+    @Request() req,
+  ): Promise<CartApiResponseDto<{ count: number }>> {
     try {
       const userId = req.user.id;
-      
+
       const result = await this.cartService.getCartItemCount(userId);
-      
+
       return {
         success: true,
         message: 'Cart count retrieved successfully',

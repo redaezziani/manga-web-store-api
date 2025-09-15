@@ -8,14 +8,14 @@ export class CategoryService {
 
   async findAll(): Promise<Category[]> {
     return this.prisma.category.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
   }
 
   async findBySlug(slug: string): Promise<Category | null> {
     return this.prisma.category.findUnique({
       where: { slug },
-      include: { mangas: true }
+      include: { mangas: true },
     });
   }
 }

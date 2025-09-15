@@ -11,7 +11,7 @@ import { JwtAuthGuard } from 'src/auth';
 })
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
-    @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('create')
   async createOrder(@Body() createOrderDto: CreateOrderDto, @Request() req) {
     try {
@@ -23,7 +23,7 @@ export class OrderController {
         data: order,
       };
     } catch (error) {
-        console.error('Error creating order:', error);
+      console.error('Error creating order:', error);
       return {
         success: false,
         message: error.message,

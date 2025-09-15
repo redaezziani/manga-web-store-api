@@ -32,7 +32,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({
     summary: 'Register a new user',
-    description: 'Create a new user account and send email verification'
+    description: 'Create a new user account and send email verification',
   })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -40,38 +40,41 @@ export class AuthController {
     description: 'User registered successfully',
     type: RegisterResponseDto,
   })
-  @ApiResponse({ 
-    status: 409, 
+  @ApiResponse({
+    status: 409,
     description: 'User with this email already exists',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: false },
-        message: { type: 'string', example: 'User with this email already exists' },
-        data: { type: 'null' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'User with this email already exists',
+        },
+        data: { type: 'null' },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: 'Bad request - validation failed',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: false },
         message: { type: 'string', example: 'Validation failed' },
-        data: { type: 'null' }
-      }
-    }
+        data: { type: 'null' },
+      },
+    },
   })
   @HttpCode(HttpStatus.CREATED)
   async register(
     @Body() registerDto: RegisterDto,
-    @Req() req: Request
+    @Req() req: Request,
   ): Promise<AuthResponseDto<RegisterResponseDto>> {
     try {
       const result = await this.authService.register(registerDto);
-      
+
       return {
         success: true,
         message: 'Registration successful',
@@ -89,7 +92,7 @@ export class AuthController {
   @Post('login')
   @ApiOperation({
     summary: 'User login',
-    description: 'Authenticate user and return access token'
+    description: 'Authenticate user and return access token',
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -97,29 +100,33 @@ export class AuthController {
     description: 'Login successful',
     type: LoginResponseDto,
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: 'Invalid credentials',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: false },
         message: { type: 'string', example: 'Invalid credentials' },
-        data: { type: 'null' }
-      }
-    }
+        data: { type: 'null' },
+      },
+    },
   })
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
-    @Req() req: Request
+    @Req() req: Request,
   ): Promise<AuthResponseDto<LoginResponseDto>> {
     try {
       const ipAddress = req.ip || req.connection.remoteAddress;
       const userAgent = req.get('User-Agent');
-      
-      const result = await this.authService.login(loginDto, ipAddress, userAgent);
-      
+
+      const result = await this.authService.login(
+        loginDto,
+        ipAddress,
+        userAgent,
+      );
+
       return {
         success: true,
         message: 'Login successful',
@@ -137,7 +144,7 @@ export class AuthController {
   @Get('verify-email')
   @ApiOperation({
     summary: 'Verify user email',
-    description: 'Verify user email address using token from email'
+    description: 'Verify user email address using token from email',
   })
   @ApiResponse({
     status: 200,
@@ -150,28 +157,36 @@ export class AuthController {
         data: {
           type: 'object',
           properties: {
-            message: { type: 'string', example: 'Email verified successfully. Welcome to Manga Store!' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Email verified successfully. Welcome to Manga Store!',
+            },
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: 'Invalid or expired verification token',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: false },
-        message: { type: 'string', example: 'Invalid or expired verification token' },
-        data: { type: 'null' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Invalid or expired verification token',
+        },
+        data: { type: 'null' },
+      },
+    },
   })
-  async verifyEmail(@Query('token') token: string): Promise<AuthResponseDto<{ message: string }>> {
+  async verifyEmail(
+    @Query('token') token: string,
+  ): Promise<AuthResponseDto<{ message: string }>> {
     try {
       const result = await this.authService.verifyEmail(token);
-      
+
       return {
         success: true,
         message: 'Email verified successfully',
@@ -189,7 +204,7 @@ export class AuthController {
   @Post('forgot-password')
   @ApiOperation({
     summary: 'Request password reset',
-    description: 'Send password reset email to user'
+    description: 'Send password reset email to user',
   })
   @ApiBody({ type: ForgotPasswordDto })
   @ApiResponse({
@@ -203,23 +218,31 @@ export class AuthController {
         data: {
           type: 'object',
           properties: {
-            message: { type: 'string', example: 'If an account with this email exists, a password reset link has been sent.' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example:
+                'If an account with this email exists, a password reset link has been sent.',
+            },
+          },
+        },
+      },
+    },
   })
   @HttpCode(HttpStatus.OK)
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
-    @Req() req: Request
+    @Req() req: Request,
   ): Promise<AuthResponseDto<{ message: string }>> {
     try {
       const ipAddress = req.ip || req.connection.remoteAddress;
       const userAgent = req.get('User-Agent');
-      
-      const result = await this.authService.forgotPassword(forgotPasswordDto, ipAddress, userAgent);
-      
+
+      const result = await this.authService.forgotPassword(
+        forgotPasswordDto,
+        ipAddress,
+        userAgent,
+      );
+
       return {
         success: true,
         message: 'Password reset email sent',
@@ -237,7 +260,7 @@ export class AuthController {
   @Post('reset-password')
   @ApiOperation({
     summary: 'Reset user password',
-    description: 'Reset user password using token from email'
+    description: 'Reset user password using token from email',
   })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({
@@ -251,31 +274,35 @@ export class AuthController {
         data: {
           type: 'object',
           properties: {
-            message: { type: 'string', example: 'Password reset successful. Please log in with your new password.' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example:
+                'Password reset successful. Please log in with your new password.',
+            },
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: 'Invalid or expired reset token',
     schema: {
       type: 'object',
       properties: {
         success: { type: 'boolean', example: false },
         message: { type: 'string', example: 'Invalid or expired reset token' },
-        data: { type: 'null' }
-      }
-    }
+        data: { type: 'null' },
+      },
+    },
   })
   @HttpCode(HttpStatus.OK)
   async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto
+    @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<AuthResponseDto<{ message: string }>> {
     try {
       const result = await this.authService.resetPassword(resetPasswordDto);
-      
+
       return {
         success: true,
         message: 'Password reset successful',

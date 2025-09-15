@@ -97,7 +97,8 @@ export class RegisterResponseDto {
 
   @ApiProperty({
     description: 'Success message',
-    example: 'Registration successful. Please check your email to verify your account.',
+    example:
+      'Registration successful. Please check your email to verify your account.',
   })
   message: string;
 }

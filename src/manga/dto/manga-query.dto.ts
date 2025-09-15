@@ -5,7 +5,8 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 
 export class MangaQueryDto extends PaginationDto {
   @ApiProperty({
-    description: 'Search term to filter manga by title, author, description, or categories',
+    description:
+      'Search term to filter manga by title, author, description, or categories',
     example: 'One Piece',
     required: false,
   })

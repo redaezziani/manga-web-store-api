@@ -1,17 +1,26 @@
-import { 
-  Injectable, 
-  ConflictException, 
-  UnauthorizedException, 
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
   NotFoundException,
   BadRequestException,
-  Logger
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { SmtpService } from '../smtp/smtp.service';
-import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
-import { AuthUserDto, LoginResponseDto, RegisterResponseDto } from './dto/auth-response.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
+import {
+  AuthUserDto,
+  LoginResponseDto,
+  RegisterResponseDto,
+} from './dto/auth-response.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
@@ -23,14 +32,14 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private smtpService: SmtpService
+    private smtpService: SmtpService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
     try {
       // Check if user already exists
       const existingUser = await this.prisma.user.findUnique({
-        where: { email: registerDto.email }
+        where: { email: registerDto.email },
       });
 
       if (existingUser) {
@@ -47,7 +56,9 @@ export class AuthService {
           password: hashedPassword,
           firstName: registerDto.firstName,
           lastName: registerDto.lastName,
-          displayName: registerDto.displayName || `${registerDto.firstName || ''} ${registerDto.lastName || ''}`.trim(),
+          displayName:
+            registerDto.displayName ||
+            `${registerDto.firstName || ''} ${registerDto.lastName || ''}`.trim(),
           status: 'PENDING_VERIFICATION',
         },
         select: {
@@ -61,7 +72,7 @@ export class AuthService {
           status: true,
           isEmailVerified: true,
           createdAt: true,
-        }
+        },
       });
 
       // Create email verification token
@@ -75,21 +86,22 @@ export class AuthService {
           token: verificationToken,
           email: user.email,
           expiresAt,
-        }
+        },
       });
 
       // Send verification email
       await this.smtpService.sendVerificationEmail(
         user.email,
         verificationToken,
-        user.displayName || user.firstName
+        user.displayName || user.firstName,
       );
 
       this.logger.log(`New user registered: ${user.email}`);
 
       return {
         user: user as AuthUserDto,
-        message: 'Registration successful. Please check your email to verify your account.'
+        message:
+          'Registration successful. Please check your email to verify your account.',
       };
     } catch (error) {
       if (error instanceof ConflictException) {
@@ -100,30 +112,55 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto, ipAddress?: string, userAgent?: string): Promise<LoginResponseDto> {
+  async login(
+    loginDto: LoginDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<LoginResponseDto> {
     try {
       // Find user
       const user = await this.prisma.user.findUnique({
-        where: { email: loginDto.email }
+        where: { email: loginDto.email },
       });
 
       if (!user) {
         // Log failed login attempt
-        await this.logLoginAttempt(null, ipAddress, userAgent, false, 'User not found');
+        await this.logLoginAttempt(
+          null,
+          ipAddress,
+          userAgent,
+          false,
+          'User not found',
+        );
         throw new UnauthorizedException('Invalid credentials');
       }
 
       // Check password
-      const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
+      const isPasswordValid = await bcrypt.compare(
+        loginDto.password,
+        user.password,
+      );
       if (!isPasswordValid) {
         // Log failed login attempt
-        await this.logLoginAttempt(user.id, ipAddress, userAgent, false, 'Invalid password');
+        await this.logLoginAttempt(
+          user.id,
+          ipAddress,
+          userAgent,
+          false,
+          'Invalid password',
+        );
         throw new UnauthorizedException('Invalid credentials');
       }
 
       // Check if user is active
       if (user.status !== 'ACTIVE' && user.status !== 'PENDING_VERIFICATION') {
-        await this.logLoginAttempt(user.id, ipAddress, userAgent, false, 'Account suspended or inactive');
+        await this.logLoginAttempt(
+          user.id,
+          ipAddress,
+          userAgent,
+          false,
+          'Account suspended or inactive',
+        );
         throw new UnauthorizedException('Account is suspended or inactive');
       }
 
@@ -136,7 +173,7 @@ export class AuthService {
         data: {
           lastLoginAt: new Date(),
           lastActiveAt: new Date(),
-        }
+        },
       });
 
       // Log successful login
@@ -158,7 +195,7 @@ export class AuthService {
           status: user.status,
           isEmailVerified: user.isEmailVerified,
           createdAt: user.createdAt,
-        } as AuthUserDto
+        } as AuthUserDto,
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -173,10 +210,14 @@ export class AuthService {
     try {
       const verification = await this.prisma.emailVerification.findUnique({
         where: { token },
-        include: { user: true }
+        include: { user: true },
       });
 
-      if (!verification || verification.isUsed || verification.expiresAt < new Date()) {
+      if (
+        !verification ||
+        verification.isUsed ||
+        verification.expiresAt < new Date()
+      ) {
         throw new BadRequestException('Invalid or expired verification token');
       }
 
@@ -187,7 +228,7 @@ export class AuthService {
           data: {
             isUsed: true,
             usedAt: new Date(),
-          }
+          },
         }),
         this.prisma.user.update({
           where: { id: verification.userId },
@@ -195,40 +236,47 @@ export class AuthService {
             isEmailVerified: true,
             emailVerifiedAt: new Date(),
             status: 'ACTIVE',
-          }
-        })
+          },
+        }),
       ]);
 
       // Send welcome email
       await this.smtpService.sendWelcomeEmail(
         verification.user.email,
-        verification.user.displayName || verification.user.firstName || 'there'
+        verification.user.displayName || verification.user.firstName || 'there',
       );
 
       this.logger.log(`Email verified for user: ${verification.user.email}`);
 
       return {
-        message: 'Email verified successfully. Welcome to Manga Store!'
+        message: 'Email verified successfully. Welcome to Manga Store!',
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
       }
       this.logger.error('Email verification failed:', error);
-      throw new BadRequestException('Email verification failed. Please try again.');
+      throw new BadRequestException(
+        'Email verification failed. Please try again.',
+      );
     }
   }
 
-  async forgotPassword(forgotPasswordDto: ForgotPasswordDto, ipAddress?: string, userAgent?: string): Promise<{ message: string }> {
+  async forgotPassword(
+    forgotPasswordDto: ForgotPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{ message: string }> {
     try {
       const user = await this.prisma.user.findUnique({
-        where: { email: forgotPasswordDto.email }
+        where: { email: forgotPasswordDto.email },
       });
 
       if (!user) {
         // Don't reveal that user doesn't exist
         return {
-          message: 'If an account with this email exists, a password reset link has been sent.'
+          message:
+            'If an account with this email exists, a password reset link has been sent.',
         };
       }
 
@@ -245,35 +293,44 @@ export class AuthService {
           expiresAt,
           ipAddress,
           userAgent,
-        }
+        },
       });
 
       // Send reset email
       await this.smtpService.sendPasswordResetEmail(
         user.email,
         resetToken,
-        user.displayName || user.firstName
+        user.displayName || user.firstName,
       );
 
       this.logger.log(`Password reset requested for user: ${user.email}`);
 
       return {
-        message: 'If an account with this email exists, a password reset link has been sent.'
+        message:
+          'If an account with this email exists, a password reset link has been sent.',
       };
     } catch (error) {
       this.logger.error('Password reset request failed:', error);
-      throw new BadRequestException('Password reset request failed. Please try again.');
+      throw new BadRequestException(
+        'Password reset request failed. Please try again.',
+      );
     }
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
     try {
       const passwordReset = await this.prisma.passwordReset.findUnique({
         where: { token: resetPasswordDto.token },
-        include: { user: true }
+        include: { user: true },
       });
 
-      if (!passwordReset || passwordReset.isUsed || passwordReset.expiresAt < new Date()) {
+      if (
+        !passwordReset ||
+        passwordReset.isUsed ||
+        passwordReset.expiresAt < new Date()
+      ) {
         throw new BadRequestException('Invalid or expired reset token');
       }
 
@@ -287,20 +344,23 @@ export class AuthService {
           data: {
             isUsed: true,
             usedAt: new Date(),
-          }
+          },
         }),
         this.prisma.user.update({
           where: { id: passwordReset.userId },
           data: {
             password: hashedPassword,
-          }
-        })
+          },
+        }),
       ]);
 
-      this.logger.log(`Password reset completed for user: ${passwordReset.user.email}`);
+      this.logger.log(
+        `Password reset completed for user: ${passwordReset.user.email}`,
+      );
 
       return {
-        message: 'Password reset successful. Please log in with your new password.'
+        message:
+          'Password reset successful. Please log in with your new password.',
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -326,7 +386,7 @@ export class AuthService {
           status: true,
           isEmailVerified: true,
           createdAt: true,
-        }
+        },
       });
 
       if (!user) {
@@ -336,7 +396,7 @@ export class AuthService {
       // Update last active timestamp
       await this.prisma.user.update({
         where: { id: userId },
-        data: { lastActiveAt: new Date() }
+        data: { lastActiveAt: new Date() },
       });
 
       return {
@@ -359,7 +419,7 @@ export class AuthService {
 
   private async generateToken(userId: string): Promise<string> {
     const payload = { sub: userId };
-    
+
     return this.jwtService.signAsync(payload, {
       expiresIn: this.configService.get('JWT_EXPIRES_IN', '24h'),
     });
@@ -381,7 +441,13 @@ export class AuthService {
     return randomBytes(32).toString('hex');
   }
 
-  private async logLoginAttempt(userId: string | null, ipAddress?: string, userAgent?: string, isSuccessful = true, failureReason?: string) {
+  private async logLoginAttempt(
+    userId: string | null,
+    ipAddress?: string,
+    userAgent?: string,
+    isSuccessful = true,
+    failureReason?: string,
+  ) {
     try {
       await this.prisma.loginHistory.create({
         data: {
@@ -390,7 +456,7 @@ export class AuthService {
           userAgent,
           isSuccessful,
           failureReason,
-        }
+        },
       });
     } catch (error) {
       // Log error but don't fail the main operation

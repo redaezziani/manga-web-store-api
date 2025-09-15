@@ -21,14 +21,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'your-super-secret-jwt-key-change-in-production',
+      secretOrKey:
+        configService.get<string>('JWT_SECRET') ||
+        'your-super-secret-jwt-key-change-in-production',
     });
   }
 
   async validate(payload: JwtPayload) {
     // This method is called after JWT is verified
     const user = await this.authService.validateUserById(payload.sub);
-    
+
     if (!user) {
       return null; // This will cause Unauthorized exception
     }
