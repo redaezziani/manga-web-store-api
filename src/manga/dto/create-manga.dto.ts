@@ -22,7 +22,8 @@ export class CreateMangaDto {
 
   @ApiProperty({
     description: 'Description of the manga story and plot',
-    example: 'Epic adventure story about pirates searching for the ultimate treasure known as One Piece. Follow Monkey D. Luffy and his crew as they navigate the Grand Line, facing powerful enemies and forming unbreakable bonds.',
+    example:
+      'Epic adventure story about pirates searching for the ultimate treasure known as One Piece. Follow Monkey D. Luffy and his crew as they navigate the Grand Line, facing powerful enemies and forming unbreakable bonds.',
     required: false,
   })
   @IsOptional()

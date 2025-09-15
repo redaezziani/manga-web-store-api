@@ -1,13 +1,23 @@
-import { IsString, IsInt, IsNumber, IsBoolean, IsOptional, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  Min,
+  Max,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 // Internal interface for service layer that includes coverImage
-export interface CreateVolumeData extends Omit<CreateVolumeDto, 'coverImageFile'> {
+export interface CreateVolumeData
+  extends Omit<CreateVolumeDto, 'coverImageFile'> {
   coverImage?: string;
 }
 
-export interface UpdateVolumeData extends Omit<UpdateVolumeDto, 'coverImageFile'> {
+export interface UpdateVolumeData
+  extends Omit<UpdateVolumeDto, 'coverImageFile'> {
   coverImage?: string;
 }
 
@@ -35,7 +45,10 @@ export class CreateVolumeDto {
     minimum: 0,
   })
   @Transform(({ value }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'Price must be a valid number with up to 2 decimal places' })
+  @IsNumber(
+    { maxDecimalPlaces: 2 },
+    { message: 'Price must be a valid number with up to 2 decimal places' },
+  )
   @Min(0, { message: 'Price must be at least 0' })
   price: number;
 
@@ -48,7 +61,10 @@ export class CreateVolumeDto {
   })
   @IsOptional()
   @Transform(({ value }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'Discount must be a valid number with up to 2 decimal places' })
+  @IsNumber(
+    { maxDecimalPlaces: 2 },
+    { message: 'Discount must be a valid number with up to 2 decimal places' },
+  )
   @Min(0, { message: 'Discount must be at least 0' })
   @Max(1, { message: 'Discount must be at most 1' })
   discount?: number = 0;
@@ -110,7 +126,10 @@ export class UpdateVolumeDto {
   })
   @IsOptional()
   @Transform(({ value }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'Price must be a valid number with up to 2 decimal places' })
+  @IsNumber(
+    { maxDecimalPlaces: 2 },
+    { message: 'Price must be a valid number with up to 2 decimal places' },
+  )
   @Min(0, { message: 'Price must be at least 0' })
   price?: number;
 
@@ -123,7 +142,10 @@ export class UpdateVolumeDto {
   })
   @IsOptional()
   @Transform(({ value }) => parseFloat(value))
-  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'Discount must be a valid number with up to 2 decimal places' })
+  @IsNumber(
+    { maxDecimalPlaces: 2 },
+    { message: 'Discount must be a valid number with up to 2 decimal places' },
+  )
   @Min(0, { message: 'Discount must be at least 0' })
   @Max(1, { message: 'Discount must be at most 1' })
   discount?: number;

@@ -54,14 +54,13 @@ export class VolumeController {
     private readonly volumeService: VolumeService,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
-   @Get('most-ordered')
+  @Get('most-ordered')
   async getMostOrderedVolumes(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ): Promise<VolumeApiResponseDto<VolumeListItemDto[]>> {
     try {
-      const mostOrderedVolumes = await this.volumeService.getMostOrderedVolumes(
-        limit,
-      );
+      const mostOrderedVolumes =
+        await this.volumeService.getMostOrderedVolumes(limit);
       return {
         success: true,
         message: 'Most ordered volumes retrieved successfully',
@@ -76,13 +75,13 @@ export class VolumeController {
     }
   }
 
-  
   @Get('low-stock')
   async getLowStockVolumes(
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ): Promise<VolumeApiResponseDto<VolumeListItemDto[]>> {
     try {
-      const lowStockVolumes = await this.volumeService.getLowStockVolumes(limit);
+      const lowStockVolumes =
+        await this.volumeService.getLowStockVolumes(limit);
       return {
         success: true,
         message: 'Low stock volumes retrieved successfully',
@@ -488,7 +487,6 @@ export class VolumeController {
   }
 
   @Get(':id/related')
-  
   async getRelatedVolumes(
     @Param('id') volumeId: string,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
@@ -511,6 +509,4 @@ export class VolumeController {
       };
     }
   }
-
- 
 }

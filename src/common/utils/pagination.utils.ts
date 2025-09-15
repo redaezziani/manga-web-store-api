@@ -27,7 +27,9 @@ export interface PaginationOptions {
 }
 
 export class PaginationUtils {
-  static validateAndNormalizePaginationParams(params: PaginationParams): PaginationOptions {
+  static validateAndNormalizePaginationParams(
+    params: PaginationParams,
+  ): PaginationOptions {
     const page = Math.max(1, params.page || 1);
     const limit = Math.min(100, Math.max(1, params.limit || 10)); // Max 100 items per page
     const skip = (page - 1) * limit;
@@ -38,17 +40,17 @@ export class PaginationUtils {
   static buildPaginationMeta(
     currentPage: number,
     itemsPerPage: number,
-    totalItems: number
+    totalItems: number,
   ): PaginationMeta {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-    
+
     return {
       currentPage,
       itemsPerPage,
       totalItems,
       totalPages,
       hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1
+      hasPreviousPage: currentPage > 1,
     };
   }
 
@@ -56,13 +58,17 @@ export class PaginationUtils {
     data: T[],
     currentPage: number,
     itemsPerPage: number,
-    totalItems: number
+    totalItems: number,
   ): PaginatedResponse<T> {
-    const meta = this.buildPaginationMeta(currentPage, itemsPerPage, totalItems);
-    
+    const meta = this.buildPaginationMeta(
+      currentPage,
+      itemsPerPage,
+      totalItems,
+    );
+
     return {
       data,
-      meta
+      meta,
     };
   }
 }
@@ -77,35 +83,37 @@ export interface SearchableField {
 export class SearchUtils {
   static buildSearchCondition(
     searchTerm: string,
-    searchableFields: SearchableField[]
+    searchableFields: SearchableField[],
   ): any {
     if (!searchTerm) return {};
 
-    const conditions = searchableFields.map(({ field, type, relationField }) => {
-      if (type === 'string') {
-        return {
-          [field]: {
-            contains: searchTerm,
-            mode: 'insensitive'
-          }
-        };
-      }
-      
-      if (type === 'relation' && relationField) {
-        return {
-          [field]: {
-            some: {
-              [relationField]: {
-                contains: searchTerm,
-                mode: 'insensitive'
-              }
-            }
-          }
-        };
-      }
-      
-      return {};
-    }).filter(condition => Object.keys(condition).length > 0);
+    const conditions = searchableFields
+      .map(({ field, type, relationField }) => {
+        if (type === 'string') {
+          return {
+            [field]: {
+              contains: searchTerm,
+              mode: 'insensitive',
+            },
+          };
+        }
+
+        if (type === 'relation' && relationField) {
+          return {
+            [field]: {
+              some: {
+                [relationField]: {
+                  contains: searchTerm,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          };
+        }
+
+        return {};
+      })
+      .filter((condition) => Object.keys(condition).length > 0);
 
     return conditions.length > 0 ? { OR: conditions } : {};
   }

@@ -12,7 +12,10 @@ export class FileValidationService {
 
   private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-  validateImageFile(file: Express.Multer.File): { isValid: boolean; error?: string } {
+  validateImageFile(file: Express.Multer.File): {
+    isValid: boolean;
+    error?: string;
+  } {
     if (!file) {
       return { isValid: false, error: 'No file provided' };
     }
@@ -34,7 +37,10 @@ export class FileValidationService {
     return { isValid: true };
   }
 
-  validateMultipleImageFiles(files: Express.Multer.File[]): { isValid: boolean; errors: string[] } {
+  validateMultipleImageFiles(files: Express.Multer.File[]): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     for (let i = 0; i < files.length; i++) {

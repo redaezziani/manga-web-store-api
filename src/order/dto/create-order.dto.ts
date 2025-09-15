@@ -2,7 +2,6 @@ import { IsString, IsOptional, IsArray, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
-
 export class CreateOrderDto {
   @ApiProperty({
     description: 'Shipping address for the order',
