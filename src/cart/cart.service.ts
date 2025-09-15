@@ -1,12 +1,17 @@
-import { 
-  Injectable, 
-  NotFoundException, 
+import {
+  Injectable,
+  NotFoundException,
   BadRequestException,
-  Logger 
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { AddToCartDto, UpdateCartItemDto } from './dto/cart.dto';
-import { CartResponseDto, CartItemDto, CartVolumeDto, CartSummaryDto } from './dto/cart-response.dto';
+import {
+  CartResponseDto,
+  CartItemDto,
+  CartVolumeDto,
+  CartSummaryDto,
+} from './dto/cart-response.dto';
 
 @Injectable()
 export class CartService {
@@ -22,7 +27,6 @@ export class CartService {
           cartItems: {
             include: {
               volume: {
-                
                 include: {
                   manga: {
                     select: {
@@ -30,14 +34,14 @@ export class CartService {
                       title: true,
                       author: true,
                       coverImage: true,
-                    }
-                  }
-                }
-              }
+                    },
+                  },
+                },
+              },
             },
-            orderBy: { createdAt: 'desc' }
-          }
-        }
+            orderBy: { createdAt: 'desc' },
+          },
+        },
       });
 
       // Create cart if it doesn't exist
@@ -55,13 +59,13 @@ export class CartService {
                         title: true,
                         author: true,
                         coverImage: true,
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         });
       }
 
@@ -72,7 +76,10 @@ export class CartService {
     }
   }
 
-  async addToCart(userId: string, addToCartDto: AddToCartDto): Promise<CartResponseDto> {
+  async addToCart(
+    userId: string,
+    addToCartDto: AddToCartDto,
+  ): Promise<CartResponseDto> {
     try {
       // Check if volume exists and is available
       const volume = await this.prisma.volume.findUnique({
@@ -85,9 +92,9 @@ export class CartService {
               author: true,
               coverImage: true,
               isAvailable: true,
-            }
-          }
-        }
+            },
+          },
+        },
       });
 
       if (!volume) {
@@ -99,17 +106,19 @@ export class CartService {
       }
 
       if (volume.stock < addToCartDto.quantity) {
-        throw new BadRequestException(`Only ${volume.stock} items available in stock`);
+        throw new BadRequestException(
+          `Only ${volume.stock} items available in stock`,
+        );
       }
 
       // Get or create cart
       let cart = await this.prisma.cart.findUnique({
-        where: { userId }
+        where: { userId },
       });
 
       if (!cart) {
         cart = await this.prisma.cart.create({
-          data: { userId }
+          data: { userId },
         });
       }
 
@@ -117,45 +126,52 @@ export class CartService {
       const existingCartItem = await this.prisma.cartItem.findFirst({
         where: {
           cartId: cart.id,
-          volumeId: addToCartDto.volumeId
-        }
+          volumeId: addToCartDto.volumeId,
+        },
       });
 
       if (existingCartItem) {
         const newQuantity = existingCartItem.quantity + addToCartDto.quantity;
-        
+
         if (newQuantity > volume.stock) {
-          throw new BadRequestException(`Cannot add ${addToCartDto.quantity} more items. Only ${volume.stock - existingCartItem.quantity} more available in stock`);
+          throw new BadRequestException(
+            `Cannot add ${addToCartDto.quantity} more items. Only ${volume.stock - existingCartItem.quantity} more available in stock`,
+          );
         }
 
         await this.prisma.cartItem.update({
           where: { id: existingCartItem.id },
-          data: { 
+          data: {
             quantity: newQuantity,
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
       } else {
         await this.prisma.cartItem.create({
           data: {
             cartId: cart.id,
             volumeId: addToCartDto.volumeId,
-            quantity: addToCartDto.quantity
-          }
+            quantity: addToCartDto.quantity,
+          },
         });
       }
 
       // Update cart timestamp
       await this.prisma.cart.update({
         where: { id: cart.id },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       });
 
-      this.logger.log(`Item added to cart for user ${userId}: Volume ${addToCartDto.volumeId} x${addToCartDto.quantity}`);
+      this.logger.log(
+        `Item added to cart for user ${userId}: Volume ${addToCartDto.volumeId} x${addToCartDto.quantity}`,
+      );
 
       return this.getCart(userId);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       this.logger.error('Failed to add item to cart:', error);
@@ -163,17 +179,20 @@ export class CartService {
     }
   }
 
-  async updateCartItem(userId: string, updateCartItemDto: UpdateCartItemDto): Promise<CartResponseDto> {
+  async updateCartItem(
+    userId: string,
+    updateCartItemDto: UpdateCartItemDto,
+  ): Promise<CartResponseDto> {
     try {
       // Find the cart item and verify ownership
       const cartItem = await this.prisma.cartItem.findFirst({
         where: {
           id: updateCartItemDto.cartItemId,
-          cart: { userId }
+          cart: { userId },
         },
         include: {
-          volume: true
-        }
+          volume: true,
+        },
       });
 
       if (!cartItem) {
@@ -182,29 +201,36 @@ export class CartService {
 
       // Check stock availability
       if (updateCartItemDto.quantity > cartItem.volume.stock) {
-        throw new BadRequestException(`Only ${cartItem.volume.stock} items available in stock`);
+        throw new BadRequestException(
+          `Only ${cartItem.volume.stock} items available in stock`,
+        );
       }
 
       // Update cart item
       await this.prisma.cartItem.update({
         where: { id: updateCartItemDto.cartItemId },
-        data: { 
+        data: {
           quantity: updateCartItemDto.quantity,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
 
       // Update cart timestamp
       await this.prisma.cart.update({
         where: { id: cartItem.cartId },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       });
 
-      this.logger.log(`Cart item updated for user ${userId}: Item ${updateCartItemDto.cartItemId} quantity changed to ${updateCartItemDto.quantity}`);
+      this.logger.log(
+        `Cart item updated for user ${userId}: Item ${updateCartItemDto.cartItemId} quantity changed to ${updateCartItemDto.quantity}`,
+      );
 
       return this.getCart(userId);
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
         throw error;
       }
       this.logger.error('Failed to update cart item:', error);
@@ -212,14 +238,17 @@ export class CartService {
     }
   }
 
-  async removeFromCart(userId: string, cartItemId: string): Promise<CartResponseDto> {
+  async removeFromCart(
+    userId: string,
+    cartItemId: string,
+  ): Promise<CartResponseDto> {
     try {
       // Find the cart item and verify ownership
       const cartItem = await this.prisma.cartItem.findFirst({
         where: {
           id: cartItemId,
-          cart: { userId }
-        }
+          cart: { userId },
+        },
       });
 
       if (!cartItem) {
@@ -228,16 +257,18 @@ export class CartService {
 
       // Remove cart item
       await this.prisma.cartItem.delete({
-        where: { id: cartItemId }
+        where: { id: cartItemId },
       });
 
       // Update cart timestamp
       await this.prisma.cart.update({
         where: { id: cartItem.cartId },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       });
 
-      this.logger.log(`Item removed from cart for user ${userId}: Item ${cartItemId}`);
+      this.logger.log(
+        `Item removed from cart for user ${userId}: Item ${cartItemId}`,
+      );
 
       return this.getCart(userId);
     } catch (error) {
@@ -252,7 +283,7 @@ export class CartService {
   async clearCart(userId: string): Promise<{ message: string }> {
     try {
       const cart = await this.prisma.cart.findUnique({
-        where: { userId }
+        where: { userId },
       });
 
       if (!cart) {
@@ -261,13 +292,13 @@ export class CartService {
 
       // Remove all cart items
       await this.prisma.cartItem.deleteMany({
-        where: { cartId: cart.id }
+        where: { cartId: cart.id },
       });
 
       // Update cart timestamp
       await this.prisma.cart.update({
         where: { id: cart.id },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       });
 
       this.logger.log(`Cart cleared for user ${userId}`);
@@ -287,15 +318,18 @@ export class CartService {
       const cart = await this.prisma.cart.findUnique({
         where: { userId },
         include: {
-          cartItems: true
-        }
+          cartItems: true,
+        },
       });
 
       if (!cart) {
         return { count: 0 };
       }
 
-      const count = cart.cartItems.reduce((total, item) => total + item.quantity, 0);
+      const count = cart.cartItems.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      );
       return { count };
     } catch (error) {
       this.logger.error('Failed to get cart item count:', error);
@@ -304,7 +338,7 @@ export class CartService {
   }
 
   private transformCartResponse(cart: any): CartResponseDto {
-    const items: CartItemDto[] = cart.cartItems.map(item => {
+    const items: CartItemDto[] = cart.cartItems.map((item) => {
       const finalPrice = item.volume.price * (1 - item.volume.discount);
       const subtotal = finalPrice * item.quantity;
 
@@ -321,10 +355,10 @@ export class CartService {
           coverImage: item.volume.coverImage,
           isAvailable: item.volume.isAvailable,
           finalPrice,
-          manga: item.volume.manga
+          manga: item.volume.manga,
         },
         createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        updatedAt: item.updatedAt,
       };
     });
 
@@ -336,16 +370,20 @@ export class CartService {
       items,
       summary,
       createdAt: cart.createdAt,
-      updatedAt: cart.updatedAt
+      updatedAt: cart.updatedAt,
     };
   }
 
   private calculateCartSummary(items: CartItemDto[]): CartSummaryDto {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const uniqueItems = items.length;
-    const subtotal = items.reduce((sum, item) => sum + (item.volume.price * item.quantity), 0);
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.volume.price * item.quantity,
+      0,
+    );
     const totalDiscount = items.reduce((sum, item) => {
-      const discountAmount = item.volume.price * item.volume.discount * item.quantity;
+      const discountAmount =
+        item.volume.price * item.volume.discount * item.quantity;
       return sum + discountAmount;
     }, 0);
     const total = subtotal - totalDiscount;
@@ -355,7 +393,7 @@ export class CartService {
       uniqueItems,
       subtotal: Math.round(subtotal * 100) / 100,
       totalDiscount: Math.round(totalDiscount * 100) / 100,
-      total: Math.round(total * 100) / 100
+      total: Math.round(total * 100) / 100,
     };
   }
 }

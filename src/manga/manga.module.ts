@@ -8,6 +8,6 @@ import { StorageModule } from '../storage/storage.module';
   imports: [DatabaseModule, StorageModule],
   controllers: [MangaController],
   providers: [MangaService],
-  exports: [MangaService]
+  exports: [MangaService],
 })
 export class MangaModule {}

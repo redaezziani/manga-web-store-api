@@ -11,15 +11,9 @@ import {
   Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiTags,
-  ApiConsumes,
-} from '@nestjs/swagger';
+import { ApiTags, ApiConsumes } from '@nestjs/swagger';
 import { MangaService } from './manga.service';
-import {
-  CreateMangaDto,
-  MangaQueryDto,
-} from './dto';
+import { CreateMangaDto, MangaQueryDto } from './dto';
 import { CloudinaryService } from '../storage/cloudinary.service';
 
 @ApiTags('Manga')

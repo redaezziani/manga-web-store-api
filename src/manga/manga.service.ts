@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateMangaDto } from './dto/create-manga.dto';
 import { Manga } from '@prisma/client';
 import { PaginationService } from '../common/services/pagination.service';
-import { PaginationParams, PaginatedResponse, SearchableField } from '../common/utils/pagination.utils';
+import {
+  PaginationParams,
+  PaginatedResponse,
+  SearchableField,
+} from '../common/utils/pagination.utils';
 
 @Injectable()
 export class MangaService extends PaginationService {
@@ -13,27 +21,26 @@ export class MangaService extends PaginationService {
 
   async create(createMangaDto: CreateMangaDto): Promise<Manga> {
     try {
-      
       const { categoryIds, ...mangaData } = createMangaDto;
 
       const manga = await this.prisma.manga.create({
         data: {
           ...mangaData,
-          ...(categoryIds && categoryIds.length > 0 && {
-            categories: {
-              connect: categoryIds.map(id => ({ id }))
-            }
-          })
+          ...(categoryIds &&
+            categoryIds.length > 0 && {
+              categories: {
+                connect: categoryIds.map((id) => ({ id })),
+              },
+            }),
         },
         include: {
           categories: true,
-          volumes: true
-        }
+          volumes: true,
+        },
       });
 
       return manga;
     } catch (error) {
-      
       if (error.code === 'P2025') {
         throw new NotFoundException('One or more categories not found');
       }
@@ -43,18 +50,20 @@ export class MangaService extends PaginationService {
       if (error.code === 'P2003') {
         throw new BadRequestException('Invalid category reference');
       }
-      
+
       throw new BadRequestException(`Failed to create manga: ${error.message}`);
     }
   }
 
-  async findAll(params: PaginationParams = {}): Promise<PaginatedResponse<Manga>> {
+  async findAll(
+    params: PaginationParams = {},
+  ): Promise<PaginatedResponse<Manga>> {
     const searchableFields: SearchableField[] = [
       { field: 'title', type: 'string' },
       { field: 'author', type: 'string' },
       { field: 'description', type: 'string' },
       { field: 'categories', type: 'relation', relationField: 'name' },
-      { field: 'categories', type: 'relation', relationField: 'nameAr' }
+      { field: 'categories', type: 'relation', relationField: 'nameAr' },
     ];
 
     const include = {
@@ -66,16 +75,16 @@ export class MangaService extends PaginationService {
           price: true,
           discount: true,
           stock: true,
-          isAvailable: true
-        }
-      }
+          isAvailable: true,
+        },
+      },
     };
 
     return this.paginate<Manga>(
       this.prisma.manga,
       params,
       searchableFields,
-      include
+      include,
     );
   }
 
@@ -86,10 +95,10 @@ export class MangaService extends PaginationService {
         categories: true,
         volumes: {
           include: {
-            previewImages: true
-          }
-        }
-      }
+            previewImages: true,
+          },
+        },
+      },
     });
 
     if (!manga) {
@@ -113,11 +122,11 @@ export class MangaService extends PaginationService {
         description: true,
         _count: {
           select: {
-            mangas: true
-          }
-        }
+            mangas: true,
+          },
+        },
       },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
     });
   }
 }

@@ -47,7 +47,7 @@ export class LocalExcelService {
 
     const worksheet = workbook.getWorksheet('Orders');
 
-    order.items.forEach(item => {
+    order.items.forEach((item) => {
       worksheet.addRow([
         order.userName,
         order.city,

@@ -23,7 +23,8 @@ export class UpdateMangaDto {
 
   @ApiProperty({
     description: 'Description of the manga story and plot',
-    example: 'Updated epic adventure story about pirates searching for the ultimate treasure.',
+    example:
+      'Updated epic adventure story about pirates searching for the ultimate treasure.',
     required: false,
   })
   @IsOptional()

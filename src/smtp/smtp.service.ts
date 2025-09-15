@@ -22,8 +22,11 @@ export class SmtpService {
     from?: string;
   }) {
     try {
-      const from = options.from || this.configService.get<string>('SMTP_FROM_EMAIL') || 'noreply@mangastore.com';
-      
+      const from =
+        options.from ||
+        this.configService.get<string>('SMTP_FROM_EMAIL') ||
+        'noreply@mangastore.com';
+
       const result = await this.resend.emails.send({
         from,
         to: Array.isArray(options.to) ? options.to : [options.to],
@@ -41,7 +44,7 @@ export class SmtpService {
 
   async sendVerificationEmail(to: string, token: string, name?: string) {
     const verificationUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/verify-email?token=${token}`;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -99,7 +102,7 @@ export class SmtpService {
 
   async sendPasswordResetEmail(to: string, token: string, name?: string) {
     const resetUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/reset-password?token=${token}`;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -170,7 +173,7 @@ export class SmtpService {
 
   async sendWelcomeEmail(to: string, name: string) {
     const loginUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/login`;
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
